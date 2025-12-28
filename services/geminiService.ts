@@ -1,7 +1,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 // Initialize the Gemini client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export const generateMarketingMessage = async (tone: 'professional' | 'casual' | 'urgent', referralLink: string): Promise<string> => {
   try {
@@ -21,8 +22,13 @@ export const generateMarketingMessage = async (tone: 'professional' | 'casual' |
       Keep it under 60 words. Use emojis where appropriate.
     `;
 
+    if (!ai) {
+      console.warn("Gemini API key is missing. Using fallback response.");
+      return "Check out Rupivo for your financial needs! Apply here: " + referralLink;
+    }
+
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: prompt,
     });
 
@@ -33,7 +39,7 @@ export const generateMarketingMessage = async (tone: 'professional' | 'casual' |
   }
 };
 
-export const generateBannerIdeas = async (targetAudience: string, referralLink: string): Promise<{concept: string, tagline: string}[]> => {
+export const generateBannerIdeas = async (targetAudience: string, referralLink: string): Promise<{ concept: string, tagline: string }[]> => {
   try {
     const prompt = `
       You are a creative marketing expert for "Rupivo", a fast and reliable lending platform.
@@ -46,8 +52,13 @@ export const generateBannerIdeas = async (targetAudience: string, referralLink: 
       2. A catchy tagline that motivates the user to click the link/apply.
     `;
 
+    if (!ai) {
+      console.warn("Gemini API key is missing. Using fallback response.");
+      throw new Error("API Key missing");
+    }
+
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
